@@ -1,5 +1,4 @@
-name: Build pull request
-
+name: online
 on:
   workflow_dispatch:
 
