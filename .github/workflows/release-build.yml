@@ -28,16 +28,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: ./gradlew assembleRelease --no-daemon
 
-      - name: Sign APK
-        id: sign_apk
-        uses: ilharp/sign-android-release@v1
-        with:
-          releaseDir: ./app/build/outputs/apk/release/
-          signingKey: ${{ secrets.SIGNING_KEYSTORE }}
-          keyStorePassword: ${{ secrets.SIGNING_KEYSTORE_PASSWORD }}
-          keyAlias: ${{ secrets.SIGNING_KEY_ALIAS }}
-          keyPassword: ${{ secrets.SIGNING_KEY_PASSWORD }}
-
       - name: Add version to APK
         run: mv ${{ steps.sign_apk.outputs.signedFile }} revanced-manager-${{ env.RELEASE_VERSION }}.apk
 
