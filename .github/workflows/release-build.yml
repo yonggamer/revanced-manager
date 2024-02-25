@@ -1,9 +1,7 @@
 name: Release Build
 
 on:
-  push:
-    tags:
-      - "v*"
+  workflow_dispatch:
 
 jobs:
   build:
@@ -49,3 +47,12 @@ jobs:
           repo_token: "${{ secrets.GITHUB_TOKEN }}"
           prerelease: false
           files: revanced-manager-${{ env.RELEASE_VERSION }}.apk
+          
+      - name: Upload build
+        uses: actions/upload-artifact@v3
+        with:
+          if-no-files-found: error
+          name: revanced-manager-(${{ env.COMMIT_HASH }}-${{ inputs.pr-number }}-${{ inputs.app-flavour }})-${{ inputs.flutter-branch }}
+          path: | 
+            build/app/outputs/flutter-apk/app-${{ inputs.app-flavour }}.apk
+            build/app/outputs/flutter-apk/app-${{ inputs.app-flavour }}.apk.sha1          
