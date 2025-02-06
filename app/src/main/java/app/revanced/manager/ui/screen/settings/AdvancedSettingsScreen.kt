@@ -10,14 +10,33 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Api
 import androidx.compose.material.icons.outlined.Restore
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.rememberTopAppBarState
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
@@ -31,6 +50,7 @@ import app.revanced.manager.ui.component.ColumnWithScrollbar
 import app.revanced.manager.ui.component.GroupHeader
 import app.revanced.manager.ui.component.settings.BooleanItem
 import app.revanced.manager.ui.component.settings.IntegerItem
+import app.revanced.manager.ui.component.settings.SafeguardBooleanItem
 import app.revanced.manager.ui.component.settings.SettingsListItem
 import app.revanced.manager.ui.viewmodel.AdvancedSettingsViewModel
 import app.revanced.manager.util.toast
@@ -52,14 +72,17 @@ fun AdvancedSettingsScreen(
             activityManager.largeMemoryClass
         )
     }
+    val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior(rememberTopAppBarState())
 
     Scaffold(
         topBar = {
             AppTopBar(
                 title = stringResource(R.string.advanced),
+                scrollBehavior = scrollBehavior,
                 onBackClick = onBackClick
             )
-        }
+        },
+        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
     ) { paddingValues ->
         ColumnWithScrollbar(
             modifier = Modifier
@@ -104,29 +127,33 @@ fun AdvancedSettingsScreen(
             )
 
             GroupHeader(stringResource(R.string.safeguards))
-            BooleanItem(
+            SafeguardBooleanItem(
                 preference = vm.prefs.disablePatchVersionCompatCheck,
                 coroutineScope = vm.viewModelScope,
                 headline = R.string.patch_compat_check,
-                description = R.string.patch_compat_check_description
+                description = R.string.patch_compat_check_description,
+                confirmationText = R.string.patch_compat_check_confirmation
             )
-            BooleanItem(
+            SafeguardBooleanItem(
                 preference = vm.prefs.disableUniversalPatchWarning,
                 coroutineScope = vm.viewModelScope,
                 headline = R.string.universal_patches_safeguard,
-                description = R.string.universal_patches_safeguard_description
+                description = R.string.universal_patches_safeguard_description,
+                confirmationText = R.string.universal_patches_safeguard_confirmation
             )
-            BooleanItem(
+            SafeguardBooleanItem(
                 preference = vm.prefs.suggestedVersionSafeguard,
                 coroutineScope = vm.viewModelScope,
                 headline = R.string.suggested_version_safeguard,
-                description = R.string.suggested_version_safeguard_description
+                description = R.string.suggested_version_safeguard_description,
+                confirmationText = R.string.suggested_version_safeguard_confirmation
             )
-            BooleanItem(
+            SafeguardBooleanItem(
                 preference = vm.prefs.disableSelectionWarning,
                 coroutineScope = vm.viewModelScope,
                 headline = R.string.patch_selection_safeguard,
-                description = R.string.patch_selection_safeguard_description
+                description = R.string.patch_selection_safeguard_description,
+                confirmationText = R.string.patch_selection_safeguard_confirmation
             )
 
             GroupHeader(stringResource(R.string.debugging))

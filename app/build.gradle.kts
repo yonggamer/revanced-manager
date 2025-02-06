@@ -13,7 +13,7 @@ plugins {
 android {
     namespace = "app.revanced.manager"
     compileSdk = 35
-    buildToolsVersion = "35.0.0"
+    buildToolsVersion = "35.0.1"
 
     defaultConfig {
         applicationId = "app.revanced.manager"
@@ -28,6 +28,7 @@ android {
         debug {
             applicationIdSuffix = ".debug"
             resValue("string", "app_name", "ReVanced Manager (dev)")
+            isPseudoLocalesEnabled = true
 
             buildConfigField("long", "BUILD_ID", "${Random.nextLong()}L")
         }
@@ -43,6 +44,8 @@ android {
                 applicationIdSuffix = ".debug"
                 resValue("string", "app_name", "ReVanced Manager Debug")
                 signingConfig = signingConfigs.getByName("debug")
+
+                isPseudoLocalesEnabled = true
             }
 
             buildConfigField("long", "BUILD_ID", "0L")
@@ -113,9 +116,10 @@ dependencies {
     implementation(libs.runtime.ktx)
     implementation(libs.runtime.compose)
     implementation(libs.splash.screen)
-    implementation(libs.compose.activity)
+    implementation(libs.activity.compose)
     implementation(libs.work.runtime.ktx)
     implementation(libs.preferences.datastore)
+    implementation(libs.appcompat)
 
     // Compose
     implementation(platform(libs.compose.bom))
@@ -125,6 +129,7 @@ dependencies {
     implementation(libs.compose.livedata)
     implementation(libs.compose.material.icons.extended)
     implementation(libs.compose.material3)
+    implementation(libs.navigation.compose)
 
     // Accompanist
     implementation(libs.accompanist.drawablepainter)
@@ -155,6 +160,9 @@ dependencies {
     implementation(libs.revanced.patcher)
     implementation(libs.revanced.library)
 
+    // Downloader plugins
+    implementation(project(":downloader-plugin"))
+
     // Native processes
     implementation(libs.kotlin.process)
 
@@ -169,10 +177,8 @@ dependencies {
     // Koin
     implementation(libs.koin.android)
     implementation(libs.koin.compose)
+    implementation(libs.koin.compose.navigation)
     implementation(libs.koin.workmanager)
-
-    // Compose Navigation
-    implementation(libs.reimagined.navigation)
 
     // Licenses
     implementation(libs.about.libraries)
@@ -196,7 +202,7 @@ dependencies {
     // EnumUtil
     implementation(libs.enumutil)
     ksp(libs.enumutil.ksp)
-    
+
     // Reorderable lists
     implementation(libs.reorderable)
 

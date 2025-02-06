@@ -13,7 +13,17 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Key
-import androidx.compose.material3.*
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -22,6 +32,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
@@ -37,6 +48,7 @@ import app.revanced.manager.ui.component.bundle.BundleSelector
 import app.revanced.manager.ui.component.settings.SettingsListItem
 import app.revanced.manager.ui.viewmodel.ImportExportViewModel
 import app.revanced.manager.util.toast
+import app.revanced.manager.util.uiSafe
 import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
 
@@ -86,27 +98,56 @@ fun ImportExportSettingsScreen(
             onDismissRequest = vm::cancelKeystoreImport,
             onSubmit = { cn, pass ->
                 vm.viewModelScope.launch {
-                    val result = vm.tryKeystoreImport(cn, pass)
-                    if (!result) context.toast(context.getString(R.string.import_keystore_wrong_credentials))
+                    uiSafe(context, R.string.failed_to_import_keystore, "Failed to import keystore") {
+                        val result = vm.tryKeystoreImport(cn, pass)
+                        if (!result) context.toast(context.getString(R.string.import_keystore_wrong_credentials))
+                    }
                 }
             }
         )
     }
 
+    val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior(rememberTopAppBarState())
+
     Scaffold(
         topBar = {
             AppTopBar(
                 title = stringResource(R.string.import_export),
+                scrollBehavior = scrollBehavior,
                 onBackClick = onBackClick
             )
-        }
+        },
+        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
     ) { paddingValues ->
         ColumnWithScrollbar(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
-            GroupHeader(stringResource(R.string.signing))
+            var showPackageSelector by rememberSaveable {
+                mutableStateOf(false)
+            }
+            var showBundleSelector by rememberSaveable {
+                mutableStateOf(false)
+            }
+
+            if (showPackageSelector) {
+                PackageSelector(packages = packagesWithOptions) { selected ->
+                    selected?.let(vm::resetOptionsForPackage)
+
+                    showPackageSelector = false
+                }
+            }
+
+            if (showBundleSelector) {
+                BundleSelector(bundles = patchBundles) { bundle ->
+                    bundle?.let(vm::clearOptionsForBundle)
+
+                    showBundleSelector = false
+                }
+            }
+
+            GroupHeader(stringResource(R.string.import_))
             GroupItem(
                 onClick = {
                     importKeystoreLauncher.launch("*/*")
@@ -114,6 +155,13 @@ fun ImportExportSettingsScreen(
                 headline = R.string.import_keystore,
                 description = R.string.import_keystore_description
             )
+            GroupItem(
+                onClick = vm::importSelection,
+                headline = R.string.import_patch_selection,
+                description = R.string.import_patch_selection_description
+            )
+
+            GroupHeader(stringResource(R.string.export))
             GroupItem(
                 onClick = {
                     if (!vm.canExport()) {
@@ -126,53 +174,24 @@ fun ImportExportSettingsScreen(
                 description = R.string.export_keystore_description
             )
             GroupItem(
-                onClick = vm::regenerateKeystore,
-                headline = R.string.regenerate_keystore,
-                description = R.string.regenerate_keystore_description
-            )
-
-            GroupHeader(stringResource(R.string.patches))
-            GroupItem(
-                onClick = vm::importSelection,
-                headline = R.string.import_patch_selection,
-                description = R.string.import_patch_selection_description
-            )
-            GroupItem(
                 onClick = vm::exportSelection,
                 headline = R.string.export_patch_selection,
                 description = R.string.export_patch_selection_description
             )
-            // TODO: allow resetting selection for specific bundle or package name.
+
+            GroupHeader(stringResource(R.string.reset))
             GroupItem(
-                onClick = vm::resetSelection,
+                onClick = vm::regenerateKeystore,
+                headline = R.string.regenerate_keystore,
+                description = R.string.regenerate_keystore_description
+            )
+            GroupItem(
+                onClick = vm::resetSelection, // TODO: allow resetting selection for specific bundle or package name.
                 headline = R.string.reset_patch_selection,
                 description = R.string.reset_patch_selection_description
             )
-
-            var showPackageSelector by rememberSaveable {
-                mutableStateOf(false)
-            }
-            var showBundleSelector by rememberSaveable {
-                mutableStateOf(false)
-            }
-
-            if (showPackageSelector)
-                PackageSelector(packages = packagesWithOptions) { selected ->
-                    selected?.let(vm::resetOptionsForPackage)
-
-                    showPackageSelector = false
-                }
-
-            if (showBundleSelector)
-                BundleSelector(bundles = patchBundles) { bundle ->
-                    bundle?.let(vm::clearOptionsForBundle)
-
-                    showBundleSelector = false
-                }
-
-            // TODO: patch options import/export.
             GroupItem(
-                onClick = vm::resetOptions,
+                onClick = vm::resetOptions, // TODO: patch options import/export.
                 headline = R.string.patch_options_reset_all,
                 description = R.string.patch_options_reset_all_description,
             )
@@ -181,12 +200,13 @@ fun ImportExportSettingsScreen(
                 headline = R.string.patch_options_reset_package,
                 description = R.string.patch_options_reset_package_description
             )
-            if (patchBundles.size > 1)
+            if (patchBundles.size > 1) {
                 GroupItem(
                     onClick = { showBundleSelector = true },
                     headline = R.string.patch_options_reset_bundle,
                     description = R.string.patch_options_reset_bundle_description,
                 )
+            }
         }
     }
 }

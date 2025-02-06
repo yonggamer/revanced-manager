@@ -24,10 +24,13 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -37,6 +40,7 @@ import app.revanced.manager.network.dto.ReVancedSocial
 import app.revanced.manager.ui.component.AppTopBar
 import app.revanced.manager.ui.component.ColumnWithScrollbar
 import app.revanced.manager.ui.component.settings.SettingsListItem
+import app.revanced.manager.ui.model.navigation.Settings
 import app.revanced.manager.ui.viewmodel.AboutViewModel
 import app.revanced.manager.ui.viewmodel.AboutViewModel.Companion.getSocialIcon
 import app.revanced.manager.util.openUrl
@@ -47,9 +51,7 @@ import org.koin.androidx.compose.koinViewModel
 @Composable
 fun AboutSettingsScreen(
     onBackClick: () -> Unit,
-    onContributorsClick: () -> Unit,
-    onLicensesClick: () -> Unit,
-    onDeveloperOptionsClick: () -> Unit,
+    navigate: (Settings.Destination) -> Unit,
     viewModel: AboutViewModel = koinViewModel()
 ) {
     val context = LocalContext.current
@@ -114,27 +116,31 @@ fun AboutSettingsScreen(
         Triple(
             stringResource(R.string.contributors),
             stringResource(R.string.contributors_description),
-            third = onContributorsClick
+            third = { navigate(Settings.Contributors) }
         ),
         Triple(
             stringResource(R.string.developer_options),
             stringResource(R.string.developer_options_description),
-            third = onDeveloperOptionsClick
+            third = { navigate(Settings.DeveloperOptions) }
         ),
         Triple(
             stringResource(R.string.opensource_licenses),
             stringResource(R.string.opensource_licenses_description),
-            third = onLicensesClick
+            third = { navigate(Settings.Licenses) }
         )
     )
+
+    val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior(rememberTopAppBarState())
 
     Scaffold(
         topBar = {
             AppTopBar(
                 title = stringResource(R.string.about),
+                scrollBehavior = scrollBehavior,
                 onBackClick = onBackClick
             )
-        }
+        },
+        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
     ) { paddingValues ->
         ColumnWithScrollbar(
             modifier = Modifier

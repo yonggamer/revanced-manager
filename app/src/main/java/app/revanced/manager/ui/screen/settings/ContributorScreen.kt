@@ -1,6 +1,5 @@
 package app.revanced.manager.ui.screen.settings
 
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -26,11 +25,14 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -54,13 +56,17 @@ fun ContributorScreen(
     viewModel: ContributorViewModel = koinViewModel()
 ) {
     val repositories = viewModel.repositories
+    val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior(rememberTopAppBarState())
+
     Scaffold(
         topBar = {
             AppTopBar(
                 title = stringResource(R.string.contributors),
+                scrollBehavior = scrollBehavior,
                 onBackClick = onBackClick
             )
         },
+        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
     ) { paddingValues ->
         LazyColumnWithScrollbar(
             modifier = Modifier
@@ -96,7 +102,7 @@ fun ContributorScreen(
     }
 }
 
-@OptIn(ExperimentalLayoutApi::class, ExperimentalFoundationApi::class)
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun ContributorsCard(
     title: String,
@@ -131,7 +137,7 @@ fun ContributorsCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = processHeadlineText(title),
+                    text = title,
                     style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Medium)
                 )
                 Text(
@@ -199,11 +205,4 @@ fun ContributorsCard(
             }
         }
     }
-}
-
-fun processHeadlineText(repositoryName: String): String {
-    return "ReVanced " + repositoryName.replace("revanced/revanced-", "")
-        .replace("-", " ")
-        .split(" ").joinToString(" ") { if (it.length > 3) it else it.uppercase() }
-        .replaceFirstChar { it.uppercase() }
 }
