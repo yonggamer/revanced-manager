@@ -7,9 +7,9 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import app.revanced.manager.domain.repository.DownloadedAppRepository
-import app.revanced.manager.domain.repository.DownloaderPluginRepository
+import app.revanced.manager.domain.repository.DownloaderRepository
 import app.revanced.manager.domain.repository.InstalledAppRepository
-import app.revanced.manager.network.downloader.DownloaderPluginState
+import app.revanced.manager.network.downloader.DownloaderPackageState
 import app.revanced.manager.ui.model.SelectedSource
 import app.revanced.manager.ui.model.navigation.SelectedAppInfo
 import app.revanced.manager.util.PM
@@ -24,7 +24,7 @@ class SourceSelectorViewModel(
 ) : ViewModel(), KoinComponent {
     private val app: Application = get()
     private val downloadedAppRepository: DownloadedAppRepository = get()
-    private val pluginRepository: DownloaderPluginRepository = get()
+    private val downloaderRepository: DownloaderRepository = get()
     private val installedAppRepository: InstalledAppRepository = get()
     private val pm: PM = get()
 
@@ -57,8 +57,8 @@ class SourceSelectorViewModel(
                 }
         }
 
-    val plugins = pluginRepository.pluginStates.map { plugins ->
-        plugins.toList().sortedByDescending { it.second is DownloaderPluginState.Loaded }
+    val plugins = downloaderRepository.downloaderPackageStates.map { plugins ->
+        plugins.toList().sortedByDescending { it.second is DownloaderPackageState.Loaded }
             .map {
                 val packageInfo = pm.getPackageInfo(it.first)
                 val label = packageInfo?.applicationInfo?.loadLabel(app.packageManager)
@@ -70,9 +70,9 @@ class SourceSelectorViewModel(
                     category = "Plugin",
                     key = it.first,
                     disableReason = when (it.second) {
-                        is DownloaderPluginState.Loaded -> null
-                        is DownloaderPluginState.Untrusted -> DisableReason.NOT_TRUSTED
-                        is DownloaderPluginState.Failed -> DisableReason.FAILED_TO_LOAD
+                        is DownloaderPackageState.Loaded -> null
+                        is DownloaderPackageState.Untrusted -> DisableReason.NOT_TRUSTED
+                        is DownloaderPackageState.Failed -> DisableReason.FAILED_TO_LOAD
                     }
                 )
             }

@@ -1,13 +1,10 @@
 package app.revanced.manager
 
-import android.content.ActivityNotFoundException
 import android.os.Bundle
 import android.os.Parcelable
-import androidx.activity.ComponentActivity
-import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
@@ -25,6 +22,8 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.navigation
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
+import app.revanced.manager.ui.model.navigation.Announcement
+import app.revanced.manager.ui.model.navigation.Announcements
 import app.revanced.manager.ui.model.navigation.AppSelector
 import app.revanced.manager.ui.model.navigation.ComplexParameter
 import app.revanced.manager.ui.model.navigation.Dashboard
@@ -33,6 +32,8 @@ import app.revanced.manager.ui.model.navigation.Patcher
 import app.revanced.manager.ui.model.navigation.SelectedAppInfo
 import app.revanced.manager.ui.model.navigation.Settings
 import app.revanced.manager.ui.model.navigation.Update
+import app.revanced.manager.ui.screen.AnnouncementScreen
+import app.revanced.manager.ui.screen.AnnouncementsScreen
 import app.revanced.manager.ui.screen.AppSelectorScreen
 import app.revanced.manager.ui.screen.DashboardScreen
 import app.revanced.manager.ui.screen.InstalledAppInfoScreen
@@ -58,14 +59,13 @@ import app.revanced.manager.ui.theme.ReVancedManagerTheme
 import app.revanced.manager.ui.theme.Theme
 import app.revanced.manager.ui.viewmodel.MainViewModel
 import app.revanced.manager.ui.viewmodel.SelectedAppInfoViewModel
-import app.revanced.manager.util.EventEffect
 import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
-import org.koin.androidx.compose.navigation.koinNavViewModel
 import org.koin.core.parameter.parametersOf
 import org.koin.androidx.viewmodel.ext.android.getViewModel as getActivityViewModel
 
-class MainActivity : ComponentActivity() {
+
+class MainActivity : AppCompatActivity() {
     @ExperimentalAnimationApi
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -77,20 +77,9 @@ class MainActivity : ComponentActivity() {
         val vm: MainViewModel = getActivityViewModel()
 
         setContent {
-            val launcher = rememberLauncherForActivityResult(
-                ActivityResultContracts.StartActivityForResult(),
-                onResult = vm::applyLegacySettings
-            )
             val theme by vm.prefs.theme.getAsState()
             val dynamicColor by vm.prefs.dynamicColor.getAsState()
             val pureBlackTheme by vm.prefs.pureBlackTheme.getAsState()
-
-            EventEffect(vm.legacyImportActivityFlow) {
-                try {
-                    launcher.launch(it)
-                } catch (_: ActivityNotFoundException) {
-                }
-            }
 
             ReVancedManagerTheme(
                 darkTheme = theme == Theme.SYSTEM && isSystemInDarkTheme() || theme == Theme.DARK,
@@ -113,7 +102,7 @@ private fun ReVancedManager() {
         enterTransition = { slideInHorizontally(initialOffsetX = { it }) },
         exitTransition = { slideOutHorizontally(targetOffsetX = { -it / 3 }) },
         popEnterTransition = { slideInHorizontally(initialOffsetX = { -it / 3 }) },
-        popExitTransition = { slideOutHorizontally(targetOffsetX = { it }) },
+        popExitTransition = { slideOutHorizontally(targetOffsetX = { it }) }
     ) {
         composable<Dashboard> {
             DashboardScreen(
@@ -124,11 +113,17 @@ private fun ReVancedManager() {
                 onUpdateClick = {
                     navController.navigate(Update())
                 },
-                onDownloaderPluginClick = {
+                onDownloaderClick = {
                     navController.navigate(Settings.Downloads)
                 },
                 onAppClick = { packageName ->
                     navController.navigate(InstalledApplicationInfo(packageName))
+                },
+                onAnnouncementsClick = {
+                    navController.navigate(Announcements)
+                },
+                onAnnouncementClick = { announcement ->
+                    navController.navigateComplex(Announcement, announcement)
                 }
             )
         }
@@ -191,13 +186,29 @@ private fun ReVancedManager() {
             )
         }
 
+        composable<Announcements> {
+            AnnouncementsScreen(
+                onBackClick = navController::popBackStack,
+                onAnnouncementClick = { announcement ->
+                    navController.navigateComplex(Announcement, announcement)
+                }
+            )
+        }
+
+        composable<Announcement> {
+            AnnouncementScreen(
+                onBackClick = navController::popBackStack,
+                announcement = it.getComplexArg()
+            )
+        }
+
         navigation<SelectedAppInfo>(startDestination = SelectedAppInfo.Main) {
             composable<SelectedAppInfo.Main> {
                 val parentBackStackEntry = navController.navGraphEntry(it)
                 val data =
                     parentBackStackEntry.getComplexArg<SelectedAppInfo.ViewModelParams>()
                 val viewModel =
-                    koinNavViewModel<SelectedAppInfoViewModel>(viewModelStoreOwner = parentBackStackEntry) {
+                    koinViewModel<SelectedAppInfoViewModel>(viewModelStoreOwner = parentBackStackEntry) {
                         parametersOf(data)
                     }
 
@@ -262,7 +273,7 @@ private fun ReVancedManager() {
             composable<SelectedAppInfo.PatchesSelector> {
                 val data =
                     it.getComplexArg<SelectedAppInfo.PatchesSelector.ViewModelParams>()
-                val selectedAppInfoVm = koinNavViewModel<SelectedAppInfoViewModel>(
+                val selectedAppInfoVm = koinViewModel<SelectedAppInfoViewModel>(
                     viewModelStoreOwner = navController.navGraphEntry(it)
                 )
 
@@ -279,7 +290,7 @@ private fun ReVancedManager() {
             composable<SelectedAppInfo.VersionSelector> {
                 val data =
                     it.getComplexArg<SelectedAppInfo.VersionSelector.ViewModelParams>()
-                val selectedAppInfoVm = koinNavViewModel<SelectedAppInfoViewModel>(
+                val selectedAppInfoVm = koinViewModel<SelectedAppInfoViewModel>(
                     viewModelStoreOwner = navController.navGraphEntry(it)
                 )
 
@@ -296,7 +307,7 @@ private fun ReVancedManager() {
             composable<SelectedAppInfo.SourceSelector> {
                 val data =
                     it.getComplexArg<SelectedAppInfo.SourceSelector.ViewModelParams>()
-                val selectedAppInfoVm = koinNavViewModel<SelectedAppInfoViewModel>(
+                val selectedAppInfoVm = koinViewModel<SelectedAppInfoViewModel>(
                     viewModelStoreOwner = navController.navGraphEntry(it)
                 )
 
@@ -313,7 +324,7 @@ private fun ReVancedManager() {
             composable<SelectedAppInfo.RequiredOptions> {
                 val data =
                     it.getComplexArg<SelectedAppInfo.PatchesSelector.ViewModelParams>()
-                val selectedAppInfoVm = koinNavViewModel<SelectedAppInfoViewModel>(
+                val selectedAppInfoVm = koinViewModel<SelectedAppInfoViewModel>(
                     viewModelStoreOwner = navController.navGraphEntry(it)
                 )
 
