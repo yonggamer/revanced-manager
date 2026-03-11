@@ -53,6 +53,15 @@ Second \"item\" text"</string>
     <string name="no_network_toast">No internet connection available</string>
 
     <string name="selected_app_meta_any_version">Any available version</string>
+    <string name="version_selector_title">Select version</string>
+    <string name="version_selector_auto_title">Auto (Recommended)</string>
+    <string name="version_selector_auto_description">Automatically select the best available version</string>
+    <string name="version_selector_state_local">Local</string>
+    <string name="version_selector_state_downloaded_installed">Downloaded, Installed</string>
+    <string name="version_selector_state_downloaded">Downloaded</string>
+    <string name="version_selector_state_installed">Installed</string>
+    <string name="version_selector_any_title">Any available version</string>
+    <string name="version_selector_any_description">Use any available version regardless of compatibility</string>
     <string name="app_source_dialog_title">Select source</string>
     <string name="app_source_dialog_option_auto">Auto</string>
     <string name="app_source_dialog_option_auto_description">Use all available downloader to download the app</string>

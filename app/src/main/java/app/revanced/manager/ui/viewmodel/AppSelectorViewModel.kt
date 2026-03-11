@@ -10,7 +10,6 @@ import androidx.lifecycle.viewmodel.compose.SavedStateHandleSaveableApi
 import androidx.lifecycle.viewmodel.compose.saveable
 import app.revanced.manager.R
 import app.revanced.manager.data.platform.Filesystem
-import app.revanced.manager.domain.repository.PatchBundleRepository
 import app.revanced.manager.util.PM
 import app.revanced.manager.util.toast
 import kotlinx.coroutines.Dispatchers
@@ -31,7 +30,6 @@ class AppSelectorViewModel(
     private val app: Application,
     private val pm: PM,
     fs: Filesystem,
-    patchBundleRepository: PatchBundleRepository,
     savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
     private val inputFile = savedStateHandle.saveable(key = "inputFile") {
@@ -72,24 +70,11 @@ class AppSelectorViewModel(
     private val storageSelectionChannel = Channel<Pair<String, String>>()
     val storageSelectionFlow = storageSelectionChannel.receiveAsFlow()
 
-    val suggestedAppVersions = patchBundleRepository.suggestedVersions.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(),
-        initialValue = emptyMap(),
-    )
-
-//    var nonSuggestedVersionDialogSubject by mutableStateOf<SelectedApp.Local?>(null)
-//        private set
-
     fun setFilterText(filter: String) {
         filterTextFlow.value = filter
     }
 
     fun loadLabel(app: PackageInfo?) = with(pm) { app?.label() ?: "Not installed" }
-
-//    fun dismissNonSuggestedVersionDialog() {
-//        nonSuggestedVersionDialogSubject = null
-//    }
 
     fun handleStorageResult(uri: Uri) = viewModelScope.launch {
         val selectedApp = withContext(Dispatchers.IO) {

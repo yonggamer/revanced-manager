@@ -11,4 +11,9 @@
     <plurals name="selected_count">
         <item quantity="other">%d selected</item>
     </plurals>
+    <plurals name="version_selector_incompatible_patches">
+        <item quantity="zero">No incompatible patches</item>
+        <item quantity="one">%d incompatible patch</item>
+        <item quantity="other">%d incompatible patches</item>
+    </plurals>
 </resources>

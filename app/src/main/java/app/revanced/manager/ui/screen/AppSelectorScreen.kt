@@ -42,7 +42,6 @@ import app.revanced.manager.ui.component.AppLabel
 import app.revanced.manager.ui.component.AppTopBar
 import app.revanced.manager.ui.component.LazyColumnWithScrollbar
 import app.revanced.manager.ui.component.LoadingIndicator
-import app.revanced.manager.ui.component.NonSuggestedVersionDialog
 import app.revanced.manager.ui.component.SearchView
 import app.revanced.manager.ui.viewmodel.AppSelectorViewModel
 import app.revanced.manager.util.APK_MIMETYPE
@@ -67,18 +66,9 @@ fun AppSelectorScreen(
             uri?.let(vm::handleStorageResult)
         }
 
-    val suggestedVersions by vm.suggestedAppVersions.collectAsStateWithLifecycle()
-
     var search by rememberSaveable { mutableStateOf(false) }
     val appList by vm.apps.collectAsStateWithLifecycle()
     val appsListFiltered by vm.filteredApps.collectAsStateWithLifecycle()
-
-//    vm.nonSuggestedVersionDialogSubject?.let {
-//        NonSuggestedVersionDialog(
-//            suggestedVersion = suggestedVersions[it.packageName].orEmpty(),
-//            onDismiss = vm::dismissNonSuggestedVersionDialog
-//        )
-//    }
 
     if (search) {
         val filterText by vm.filterText.collectAsState()
