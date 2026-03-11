@@ -15,6 +15,7 @@ import app.revanced.manager.R
 import app.revanced.manager.domain.manager.PreferencesManager
 import app.revanced.manager.domain.repository.DownloadedAppRepository
 import app.revanced.manager.domain.repository.DownloaderRepository
+import app.revanced.manager.domain.repository.InstalledAppRepository
 import app.revanced.manager.domain.repository.PatchBundleRepository
 import app.revanced.manager.domain.repository.PatchOptionsRepository
 import app.revanced.manager.domain.repository.PatchSelectionRepository
@@ -52,6 +53,7 @@ class SelectedAppInfoViewModel(
     private val selectionRepository: PatchSelectionRepository = get()
     private val optionsRepository: PatchOptionsRepository = get()
     private val downloaderRepository: DownloaderRepository = get()
+    private val installedAppRepository: InstalledAppRepository = get()
     private val downloadedAppRepository: DownloadedAppRepository = get()
     private val pm: PM = get()
     private val savedStateHandle: SavedStateHandle = get()
@@ -120,11 +122,22 @@ class SelectedAppInfoViewModel(
             is SelectedSource.Downloaded -> source
             is SelectedSource.Plugin -> source
             is SelectedSource.Auto -> {
-                val downloadedApp = version?.let { downloadedAppRepository.get(packageName, it) }
-                val file = downloadedApp?.let(downloadedAppRepository::getApkFileForApp)
+                val installedPackage = pm.getPackageInfo(packageName)
+                val isPatched = installedAppRepository.get(packageName) != null
+                val isSplit = installedPackage?.applicationInfo?.splitSourceDirs?.isEmpty() == false
 
-                file?.let { SelectedSource.Downloaded(it.path, version) }
-                    ?: SelectedSource.Plugin(null)
+                if (installedPackage != null && !isPatched && !isSplit && (version == null || installedPackage.versionName == version)) {
+                    SelectedSource.Installed
+                } else {
+                    val app = version?.let {
+                        downloadedAppRepository.get(packageName, it)
+                    }
+                    val file = app?.let {
+                        downloadedAppRepository.getApkFileForApp(it)
+                    }
+                    file?.let { SelectedSource.Downloaded(it.path, version) }
+                        ?: SelectedSource.Plugin(null)
+                }
             }
         }
     }
