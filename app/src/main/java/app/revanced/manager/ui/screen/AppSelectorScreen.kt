@@ -102,13 +102,16 @@ fun AppSelectorScreen(
                                 {
                                     Text(
                                         pluralStringResource(
-                                            R.plurals.patch_count,
+                                            R.plurals.available_patch_count,
                                             it,
                                             it
                                         )
                                     )
                                 }
                             },
+                            trailingContent = if (app.packageInfo == null) {
+                                { Text(stringResource(R.string.not_installed)) }
+                            } else null,
                             colors = transparentListItemColors
                         )
                     }
@@ -218,13 +221,16 @@ fun AppSelectorScreen(
                             {
                                 Text(
                                     pluralStringResource(
-                                        R.plurals.patch_count,
+                                        R.plurals.available_patch_count,
                                         it,
                                         it
                                     )
                                 )
                             }
-                        }
+                        },
+                        trailingContent = if (app.packageInfo == null) {
+                            { Text(stringResource(R.string.not_installed)) }
+                        } else null
                     )
                 }
             }
